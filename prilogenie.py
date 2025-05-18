@@ -9,7 +9,6 @@ class CommentClassifierApp:
         self.root = root
         self.model_path = model_path
         
-        # Ручное указание названий классов (замените на свои)
         self.class_names = [
            'Вопрос решен',
     'Нравится качество выполнения заявки',
@@ -19,7 +18,6 @@ class CommentClassifierApp:
     'Проблемы'
         ]
         
-        # Ручное указание порога классификации
         self.threshold = 0.5
         
         self.load_model()
@@ -28,7 +26,6 @@ class CommentClassifierApp:
     def load_model(self):
         """Загружает только модель без label_map.json"""
         try:
-            # Проверяем обязательные файлы модели
             required_files = [
                 "pytorch_model.bin",
                 "config.json",
@@ -38,8 +35,6 @@ class CommentClassifierApp:
             for file in required_files:
                 if not os.path.exists(os.path.join(self.model_path, file)):
                     raise FileNotFoundError(f"Не найден файл: {file}")
-            
-            # Загружаем модель и токенизатор
             self.tokenizer = BertTokenizer.from_pretrained(self.model_path)
             self.model = BertForSequenceClassification.from_pretrained(self.model_path)
             self.model.eval()
@@ -57,14 +52,11 @@ class CommentClassifierApp:
         self.root.title("Классификатор комментариев")
         self.root.geometry("800x600")
         
-        # Центрируем окно
         self.center_window()
         
-        # Основной фрейм
         main_frame = ttk.Frame(self.root, padding="10")
         main_frame.pack(fill=tk.BOTH, expand=True)
         
-        # Поле ввода комментария
         ttk.Label(main_frame, text="Введите ваш комментарий:", font=('Arial', 12)).pack(pady=5)
         
         self.comment_input = scrolledtext.ScrolledText(
@@ -76,7 +68,6 @@ class CommentClassifierApp:
         )
         self.comment_input.pack(pady=10)
         
-        # Кнопка классификации
         classify_btn = ttk.Button(
             main_frame,
             text="Определить категории",
@@ -84,18 +75,15 @@ class CommentClassifierApp:
         )
         classify_btn.pack(pady=10)
         
-        # Фрейм для результатов
         results_frame = ttk.LabelFrame(main_frame, text="Результаты", padding="10")
         results_frame.pack(fill=tk.BOTH, expand=True)
         
-        # Таблица результатов
         self.results_tree = ttk.Treeview(
             results_frame,
             columns=('class', 'probability', 'is_selected'),
             show='headings'
         )
         
-        # Настройка колонок
         self.results_tree.heading('class', text='Категория')
         self.results_tree.heading('probability', text='Вероятность (%)')
         self.results_tree.heading('is_selected', text='Принадлежит')
@@ -104,14 +92,12 @@ class CommentClassifierApp:
         self.results_tree.column('probability', width=200, anchor='center')
         self.results_tree.column('is_selected', width=150, anchor='center')
         
-        # Скроллбар
         scrollbar = ttk.Scrollbar(results_frame, orient=tk.VERTICAL, command=self.results_tree.yview)
         self.results_tree.configure(yscroll=scrollbar.set)
         
         self.results_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
-        # Цвета для строк
         self.results_tree.tag_configure('selected', background='#e6f3e6')
         self.results_tree.tag_configure('not_selected', background='#f3e6e6')
     
@@ -133,7 +119,6 @@ class CommentClassifierApp:
             return
         
         try:
-            # Токенизация текста
             inputs = self.tokenizer(
                 comment,
                 padding=True,
@@ -142,16 +127,13 @@ class CommentClassifierApp:
                 return_tensors="pt"
             )
             
-            # Получение предсказаний
             with torch.no_grad():
                 outputs = self.model(**inputs)
                 probabilities = torch.sigmoid(outputs.logits).numpy().flatten()
             
-            # Очистка предыдущих результатов
             for item in self.results_tree.get_children():
                 self.results_tree.delete(item)
             
-            # Добавление новых результатов
             for class_name, prob in zip(self.class_names, probabilities):
                 is_selected = "Да" if prob > self.threshold else "Нет"
                 self.results_tree.insert(
@@ -169,10 +151,8 @@ class CommentClassifierApp:
             messagebox.showerror("Ошибка", f"Произошла ошибка при классификации:\n{str(e)}")
 
 if __name__ == "__main__":
-    # Укажите путь к вашей модели
     MODEL_PATH = "./saved_comment_classifier"
-    
-    # Создаем и запускаем приложение
+
     root = tk.Tk()
     app = CommentClassifierApp(root, MODEL_PATH)
     root.mainloop()
