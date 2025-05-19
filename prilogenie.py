@@ -11,14 +11,18 @@ class CommentClassifierApp:
         
         self.class_names = [
            'Вопрос решен',
-    'Нравится качество выполнения заявки',
-    'Нравится качество работы сотрудников',
-    'Нравится скорость отработки заявок',
-    'Понравилось выполнение заявки',
-    'Проблемы'
+           'Нравится качество выполнения заявки',
+           'Нравится качество работы сотрудников',
+           'Нравится скорость отработки заявок',
+           'Понравилось выполнение заявки',
+           'Проблемы'
         ]
         
         self.threshold = 0.5
+        self.default_font = ('Arial', 14)
+        self.title_font = ('Arial', 16, 'bold')
+        self.button_font = ('Arial', 14)
+        self.tree_font = ('Arial', 13)
         
         self.load_model()
         self.setup_ui()
@@ -50,47 +54,56 @@ class CommentClassifierApp:
     def setup_ui(self):
         """Настраивает интерфейс приложения"""
         self.root.title("Классификатор комментариев")
-        self.root.geometry("800x600")
+        self.root.geometry("900x700")
+        
+        style = ttk.Style()
+        style.configure('.', font=self.default_font)
+        style.configure('TLabel', font=self.default_font)
+        style.configure('TButton', font=self.button_font)
+        style.configure('Treeview', font=self.tree_font)
+        style.configure('Treeview.Heading', font=self.tree_font)
         
         self.center_window()
         
-        main_frame = ttk.Frame(self.root, padding="10")
+        main_frame = ttk.Frame(self.root, padding="15")
         main_frame.pack(fill=tk.BOTH, expand=True)
         
-        ttk.Label(main_frame, text="Введите ваш комментарий:", font=('Arial', 12)).pack(pady=5)
+        ttk.Label(main_frame, text="Введите ваш комментарий:", font=self.title_font).pack(pady=10)
         
         self.comment_input = scrolledtext.ScrolledText(
             main_frame, 
             wrap=tk.WORD,
             width=80,
             height=10,
-            font=('Arial', 10)
+            font=self.default_font
         )
-        self.comment_input.pack(pady=10)
+        self.comment_input.pack(pady=15)
         
         classify_btn = ttk.Button(
             main_frame,
             text="Определить категории",
-            command=self.classify_comment
+            command=self.classify_comment,
+            style='TButton'
         )
-        classify_btn.pack(pady=10)
+        classify_btn.pack(pady=15)
         
-        results_frame = ttk.LabelFrame(main_frame, text="Результаты", padding="10")
+        results_frame = ttk.LabelFrame(main_frame, text="Результаты", padding="15", style='TLabel')
         results_frame.pack(fill=tk.BOTH, expand=True)
         
         self.results_tree = ttk.Treeview(
             results_frame,
             columns=('class', 'probability', 'is_selected'),
-            show='headings'
+            show='headings',
+            style='Treeview'
         )
         
         self.results_tree.heading('class', text='Категория')
         self.results_tree.heading('probability', text='Вероятность (%)')
         self.results_tree.heading('is_selected', text='Принадлежит')
         
-        self.results_tree.column('class', width=300, anchor='w')
-        self.results_tree.column('probability', width=200, anchor='center')
-        self.results_tree.column('is_selected', width=150, anchor='center')
+        self.results_tree.column('class', width=350, anchor='w')
+        self.results_tree.column('probability', width=250, anchor='center')
+        self.results_tree.column('is_selected', width=200, anchor='center')
         
         scrollbar = ttk.Scrollbar(results_frame, orient=tk.VERTICAL, command=self.results_tree.yview)
         self.results_tree.configure(yscroll=scrollbar.set)
